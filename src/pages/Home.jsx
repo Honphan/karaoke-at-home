@@ -152,9 +152,19 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <p className="mt-10 text-white/15 text-xs font-display relative z-10">
-        Karaoke at Home © 2026 — Made with 🎤 & ❤️
-      </p>
+      <div className="mt-10 text-center relative z-10 animate-fade-in">
+        <p className="text-white/25 text-sm font-display font-medium flex justify-center items-center gap-1">
+          Made by{' '}
+          <div
+            className="text-neon-cyan hover:text-neon-magenta transition-colors duration-300 font-bold"
+          >
+            HonPhan
+          </div>
+        </p>
+        <p className="text-white/10 text-xs mt-1 font-display">
+          Karaoke at Home © 2026 — 🎤 & ❤️
+        </p>
+      </div>
     </div>
   );
 }

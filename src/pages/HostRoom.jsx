@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { onRoomChange, nextSong, removeFromQueue, prioritizeSong } from '../services/roomService';
+import { onRoomChange, nextSong, removeFromQueue, prioritizeSong, deleteRoom } from '../services/roomService';
 import VideoPlayer from '../components/VideoPlayer';
 import QRCodeView from '../components/QRCodeView';
 import QueueList from '../components/QueueList';
@@ -17,6 +17,21 @@ export default function HostRoom() {
     });
     return () => unsubscribe();
   }, [roomId]);
+
+  // Delete room when closing browser/tab
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Use sendBeacon for reliable cleanup on tab close
+      deleteRoom(roomId);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [roomId]);
+
+  const handleGoHome = async () => {
+    await deleteRoom(roomId);
+    navigate('/');
+  };
 
   const handleVideoEnd = async () => {
     await nextSong(roomId);
@@ -43,7 +58,7 @@ export default function HostRoom() {
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/5">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/')}
+            onClick={handleGoHome}
             className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
           >
             <Home className="w-4 h-4 text-white/50" />

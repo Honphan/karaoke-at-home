@@ -49,6 +49,15 @@ export async function roomExists(roomId) {
 }
 
 /**
+ * Delete a room from Firebase.
+ * @param {string} roomId
+ */
+export async function deleteRoom(roomId) {
+  const roomRef = ref(db, `rooms/${roomId}`);
+  await remove(roomRef);
+}
+
+/**
  * Add a song to the room queue.
  * @param {string} roomId
  * @param {{id: string, title: string, thumbnail: string, user: string}} song

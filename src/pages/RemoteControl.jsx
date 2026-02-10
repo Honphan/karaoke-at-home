@@ -5,12 +5,13 @@ import {
   addToQueue,
   removeFromQueue,
   prioritizeSong,
+  nextSong,
 } from '../services/roomService';
 import { searchVideos } from '../services/youtubeService';
 import SearchBar from '../components/SearchBar';
 import SearchResult from '../components/SearchResult';
 import QueueList from '../components/QueueList';
-import { Search, ListMusic, Home, Mic2, User } from 'lucide-react';
+import { Search, ListMusic, Home, Mic2, User, SkipForward } from 'lucide-react';
 
 export default function RemoteControl() {
   const { roomId } = useParams();
@@ -85,6 +86,11 @@ export default function RemoteControl() {
     showToast('Đã xóa bài! 🗑️');
   };
 
+  const handleSkip = async () => {
+    await nextSong(roomId);
+    showToast('Đã chuyển bài! ⏭️');
+  };
+
   const handleSaveName = (e) => {
     e.preventDefault();
     if (userName.trim()) {
@@ -155,10 +161,17 @@ export default function RemoteControl() {
           </div>
         </div>
 
-        {/* Now playing mini */}
+        {/* Now playing mini + Skip */}
         {currentVideo && (
-          <div className="flex items-center gap-2 max-w-[50%]">
-            <div className="now-playing-bars flex items-end h-3">
+          <div className="flex items-center gap-2 max-w-[55%]">
+            <button
+              onClick={handleSkip}
+              className="px-3 py-1.5 rounded-xl bg-neon-cyan/10 hover:bg-neon-cyan/25 flex items-center gap-1.5 transition-colors flex-shrink-0 cursor-pointer border border-neon-cyan/20"
+            >
+              <SkipForward className="w-4 h-4 text-neon-cyan" />
+              <span className="text-neon-cyan text-xs font-display font-semibold">Bỏ qua</span>
+            </button>
+            <div className="now-playing-bars flex items-end h-3 flex-shrink-0">
               <span /><span /><span /><span />
             </div>
             <p className="text-white/50 text-[10px] truncate">
