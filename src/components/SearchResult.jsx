@@ -1,8 +1,9 @@
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, Heart } from 'lucide-react';
 import { useState } from 'react';
 
-export default function SearchResult({ results, onAddToQueue }) {
+export default function SearchResult({ results, onAddToQueue, onAddFavorite, favoriteIds = new Set() }) {
   const [addedIds, setAddedIds] = useState(new Set());
+  const [heartAnimIds, setHeartAnimIds] = useState(new Set());
 
   const handleAdd = (song) => {
     onAddToQueue(song);
@@ -16,6 +17,18 @@ export default function SearchResult({ results, onAddToQueue }) {
     }, 2000);
   };
 
+  const handleFavorite = (song) => {
+    onAddFavorite?.(song);
+    setHeartAnimIds((prev) => new Set([...prev, song.id]));
+    setTimeout(() => {
+      setHeartAnimIds((prev) => {
+        const next = new Set(prev);
+        next.delete(song.id);
+        return next;
+      });
+    }, 600);
+  };
+
   if (results.length === 0) {
     return null;
   }
@@ -24,6 +37,8 @@ export default function SearchResult({ results, onAddToQueue }) {
     <div className="space-y-2 mt-4">
       {results.map((song, index) => {
         const isAdded = addedIds.has(song.id);
+        const isFavorited = favoriteIds.has(song.id);
+        const isHeartAnim = heartAnimIds.has(song.id);
 
         return (
           <div
@@ -54,7 +69,21 @@ export default function SearchResult({ results, onAddToQueue }) {
               </p>
             </div>
 
-            {/* Add button */}
+            {/* Favorite button */}
+            <button
+              onClick={() => handleFavorite(song)}
+              disabled={isFavorited}
+              className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                isFavorited
+                  ? 'bg-neon-pink/20 text-neon-pink cursor-default'
+                  : 'bg-white/5 text-white/30 hover:bg-neon-pink/15 hover:text-neon-pink cursor-pointer'
+              } ${isHeartAnim ? 'heart-pop' : ''}`}
+              title={isFavorited ? 'Đã yêu thích' : 'Thêm yêu thích'}
+            >
+              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+            </button>
+
+            {/* Add to queue button */}
             <button
               onClick={() => handleAdd(song)}
               disabled={isAdded}
@@ -63,6 +92,7 @@ export default function SearchResult({ results, onAddToQueue }) {
                   ? 'bg-green-500/20 text-green-400 cursor-default'
                   : 'bg-neon-violet/10 text-neon-violet hover:bg-neon-violet hover:text-white hover:shadow-neon-violet cursor-pointer'
               }`}
+              title="Thêm vào hàng chờ"
             >
               {isAdded ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             </button>

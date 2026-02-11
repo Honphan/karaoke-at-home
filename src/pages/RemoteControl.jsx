@@ -8,10 +8,16 @@ import {
   nextSong,
 } from '../services/roomService';
 import { searchVideos } from '../services/youtubeService';
+import {
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+} from '../services/favoriteService';
 import SearchBar from '../components/SearchBar';
 import SearchResult from '../components/SearchResult';
 import QueueList from '../components/QueueList';
-import { Search, ListMusic, Home, Mic2, User, SkipForward } from 'lucide-react';
+import FavoriteList from '../components/FavoriteList';
+import { Search, ListMusic, Heart, Home, Mic2, User, SkipForward } from 'lucide-react';
 
 export default function RemoteControl() {
   const { roomId } = useParams();
@@ -23,6 +29,11 @@ export default function RemoteControl() {
   const [userName, setUserName] = useState('');
   const [showNameInput, setShowNameInput] = useState(true);
   const [toast, setToast] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+
+  // Derive a set of favorite IDs for quick lookup in search results
+  const favoriteIds = new Set(favorites.map((s) => s.id));
 
   // Load saved username
   useEffect(() => {
@@ -32,6 +43,24 @@ export default function RemoteControl() {
       setShowNameInput(false);
     }
   }, [roomId]);
+
+  // Load favorites when username is available
+  useEffect(() => {
+    if (!userName || showNameInput) return;
+    loadFavorites();
+  }, [userName, showNameInput]);
+
+  const loadFavorites = async () => {
+    setFavoritesLoading(true);
+    try {
+      const favs = await getFavorites(userName);
+      setFavorites(favs);
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
 
   // Listen for room changes
   useEffect(() => {
@@ -74,6 +103,42 @@ export default function RemoteControl() {
     } catch (err) {
       showToast('Lỗi khi thêm bài!', 'error');
     }
+  };
+
+  const handleAddFavorite = async (song) => {
+    try {
+      const added = await addFavorite(userName, song);
+      if (added) {
+        setFavorites((prev) => [
+          ...prev,
+          {
+            id: song.id,
+            title: song.title,
+            thumbnail: song.thumbnail,
+            channelTitle: song.channelTitle || '',
+          },
+        ]);
+        showToast('Đã thêm vào yêu thích! ❤️');
+      } else {
+        showToast('Bài này đã có trong yêu thích rồi!', 'info');
+      }
+    } catch (err) {
+      showToast('Lỗi khi thêm yêu thích!', 'error');
+    }
+  };
+
+  const handleRemoveFavorite = async (songId) => {
+    try {
+      await removeFavorite(userName, songId);
+      setFavorites((prev) => prev.filter((s) => s.id !== songId));
+      showToast('Đã xóa khỏi yêu thích! 💔');
+    } catch (err) {
+      showToast('Lỗi khi xóa yêu thích!', 'error');
+    }
+  };
+
+  const handleAddFavoriteToQueue = async (song) => {
+    await handleAddToQueue(song);
   };
 
   const handlePrioritize = async (index) => {
@@ -195,6 +260,22 @@ export default function RemoteControl() {
           Tìm bài
         </button>
         <button
+          onClick={() => setActiveTab('favorites')}
+          className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-display font-medium transition-all duration-300 cursor-pointer relative ${
+            activeTab === 'favorites'
+              ? 'text-neon-pink border-b-2 border-neon-pink bg-neon-pink/5'
+              : 'text-white/35 hover:text-white/60'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-current' : ''}`} />
+          Yêu thích
+          {favorites.length > 0 && (
+            <span className="absolute top-2 right-[calc(50%-40px)] w-5 h-5 rounded-full bg-neon-pink text-white text-[10px] font-bold flex items-center justify-center">
+              {favorites.length}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setActiveTab('queue')}
           className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-display font-medium transition-all duration-300 cursor-pointer relative ${
             activeTab === 'queue'
@@ -214,10 +295,15 @@ export default function RemoteControl() {
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'search' ? (
+        {activeTab === 'search' && (
           <div>
             <SearchBar onSearch={handleSearch} isLoading={isSearching} />
-            <SearchResult results={searchResults} onAddToQueue={handleAddToQueue} />
+            <SearchResult
+              results={searchResults}
+              onAddToQueue={handleAddToQueue}
+              onAddFavorite={handleAddFavorite}
+              favoriteIds={favoriteIds}
+            />
 
             {/* Empty state */}
             {searchResults.length === 0 && !isSearching && (
@@ -232,7 +318,18 @@ export default function RemoteControl() {
               </div>
             )}
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'favorites' && (
+          <FavoriteList
+            favorites={favorites}
+            onAddToQueue={handleAddFavoriteToQueue}
+            onRemoveFavorite={handleRemoveFavorite}
+            isLoading={favoritesLoading}
+          />
+        )}
+
+        {activeTab === 'queue' && (
           <QueueList
             queue={queue}
             currentVideo={currentVideo}

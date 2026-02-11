@@ -60,6 +60,7 @@ export default {
         'neon-magenta': '0 0 20px rgba(255, 45, 123, 0.4), 0 0 60px rgba(255, 45, 123, 0.15)',
         'neon-cyan': '0 0 20px rgba(0, 240, 255, 0.4), 0 0 60px rgba(0, 240, 255, 0.15)',
         'neon-violet': '0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(139, 92, 246, 0.15)',
+        'neon-pink': '0 0 20px rgba(255, 110, 199, 0.4), 0 0 60px rgba(255, 110, 199, 0.15)',
         'glass': '0 8px 32px rgba(0, 0, 0, 0.4)',
       },
     },
